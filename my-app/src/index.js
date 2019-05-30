@@ -16,15 +16,13 @@ serviceWorker.unregister();
 
 
 /*
-ReactJS Tutorial on Tic Tac Toe Project
+ReactJS Tutorial on Tic Tac Toe Project [Completed]
 https://reactjs.org/tutorial/tutorial.html
 
 Additional Resources
 CSS Styling Guide https://codeburst.io/4-four-ways-to-style-react-components-ac6f323da822
 */
 
-
-//Stopped at https://reactjs.org/tutorial/tutorial.html#adding-time-travel
 
 function Square(props){
 	return(
@@ -36,55 +34,21 @@ function Square(props){
 
 class Board extends React.Component {
 
-	constructor(props){
-		super(props);
-		this.state = {
-			//Stores the current game state
-			squares : Array(9).fill(null),
-			xIsNext: true,
-		};
-	}
-
-	//Updates the game state according to mouse clicks
-	handleClick(i){
-		const squares = this.state.squares.slice();
-		if (calculateWinner(squares) || squares[i]) {
-			//Ignore click once there is a winner
-			return;
-		}
-		//Check which player's turn and fill in square accordingly
-		squares[i] = this.state.xIsNext? 'X':'O';
-		this.setState({
-			squares: squares,
-			xIsNext: !this.state.xIsNext,
-		});
-	}
-
 	renderSquare(i) {
 		return (
 			<Square 
 				//Render the squares according to the game state values
-				value={this.state.squares[i]} 
+				value={this.props.squares[i]} 
 				//Handles behaviour when user clicks square
-				onClick={() => this.handleClick(i)}
+				onClick={() => this.props.onClick(i)}
 			/>
 		);
 	}
 
 	render() {
-		const winner = calculateWinner(this.state.squares);
-		let status;
-		if (winner){
-			//Declare winner
-			status = 'Winner: ' + winner;
-		}
-		else {
-			status = 'Next Player: ' + (this.state.xIsNext? 'X' : 'O')
-		}
 
 		return (
 			<div>
-				<div className="status">{status}</div>
 				<div className="board-row">
 					{this.renderSquare(0)}
 					{this.renderSquare(1)}
@@ -106,15 +70,95 @@ class Board extends React.Component {
 }
 
 class Game extends React.Component {
+
+	constructor(props){
+		super(props);
+		this.state={
+			//Track game historical states with immutable state arrays at
+			//every move
+			history:[{
+				squares:Array(9).fill(null),
+			}],
+			xIsNext: true,
+			stepNumber: 0,
+		}
+	}
+
+	//Updates the game state according to mouse clicks
+	handleClick(i){
+
+		//Get current game state, allow future to be erased once a state in the
+		//past has been changed
+		const history = this.state.history.slice(0, this.state.stepNumber +1); //Erases the next move onward
+		const current = history[history.length-1];
+		const squares = current.squares.slice();
+
+		if (calculateWinner(squares) || squares[i]) {
+			//Ignore click once there is a winner
+			return;
+		}
+		//Check which player's turn and fill in square accordingly
+		squares[i] = this.state.xIsNext ? 'X':'O';
+		//Record to history, switch turn
+		this.setState({
+			history: history.concat([{
+				squares: squares,
+			}]),
+			xIsNext: !this.state.xIsNext,
+			stepNumber: history.length,
+		});
+	}
+
+	jumpTo(step) {
+		this.setState({
+			stepNumber: step,
+			xIsNext: (step%2) === 0,
+		});
+	}
+
+
 	render() {
+		//Get current gate state and check for winner
+		const history = this.state.history;
+		const current = history[this.state.stepNumber];
+		const winner = calculateWinner(current.squares);
+
+		//Time travel and make changes to game state
+		const moves = history.map((step,move) => {
+			const desc = move?
+				'Go to move #' + move : 
+				'Go to game start';
+			return (
+				//Store key data to identify dynamic list
+				<li key={move}>
+					<button onClick = {() => this.jumpTo(move)}>{desc}</button>
+				</li>
+			);
+
+
+		});
+
+		let status;
+		if (winner) {
+			status = 'Winner: ' + winner;
+		}
+		else {
+			status = 'Next Player: ' + (this.state.xIsNext ? 'X':'O');
+		}
+
+
 		return (
 			<div className="game">
 				<div className="game-board">
-					<Board />
+					<Board 
+						squares = {current.squares}
+						onClick = {(i) => this.handleClick(i)}
+
+					/>
 				</div>
 				<div className="game-info">
-					<div>{/* status */}</div>
-					<ol>{/* TODO */}</ol>
+					<div>{status}</div>
+					<ol>{moves}</ol>
 				</div>
 			</div>
 		);
