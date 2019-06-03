@@ -15,14 +15,8 @@ serviceWorker.unregister();
 
 
 
-/*
-ReactJS Tutorial on Tic Tac Toe Project [Completed]
-https://reactjs.org/tutorial/tutorial.html
 
-Additional Resources
-CSS Styling Guide https://codeburst.io/4-four-ways-to-style-react-components-ac6f323da822
-*/
-
+const numSquares = 9;
 
 function Square(props){
 	return(
@@ -71,16 +65,24 @@ class Board extends React.Component {
 
 class Game extends React.Component {
 
+
 	constructor(props){
 		super(props);
+
 		this.state={
 			//Track game historical states with immutable state arrays at
 			//every move
 			history:[{
-				squares:Array(9).fill(null),
+				squares:Array(numSquares).fill(null),
 			}],
 			xIsNext: true,
+
+			emptySquaresLeft: numSquares,
+
+			//Track end game status
 			stepNumber: 0,
+			draw: false,
+			gameEnd : false,
 		}
 	}
 
@@ -93,9 +95,19 @@ class Game extends React.Component {
 		const current = history[history.length-1];
 		const squares = current.squares.slice();
 
-		if (calculateWinner(squares) || squares[i]) {
-			//Ignore click once there is a winner
-			return;
+		//Deal with draw situations
+		if (this.state.emptySquaresLeft === 1){
+			if (calculateWinner(squares) == null){
+				this.setState({
+					draw : true,
+					gameEnd : true,
+				})
+				
+			}
+		}
+		//Handles click on a filled square or game has already ended with a draw/winner
+		else if (squares[i] || this.state.gameEnd) {
+			return
 		}
 		//Check which player's turn and fill in square accordingly
 		squares[i] = this.state.xIsNext ? 'X':'O';
@@ -106,6 +118,7 @@ class Game extends React.Component {
 			}]),
 			xIsNext: !this.state.xIsNext,
 			stepNumber: history.length,
+			emptySquaresLeft: this.state.emptySquaresLeft - 1,
 		});
 	}
 
@@ -113,6 +126,21 @@ class Game extends React.Component {
 		this.setState({
 			stepNumber: step,
 			xIsNext: (step%2) === 0,
+			emptySquaresLeft: numSquares - step,
+		});
+	}
+
+	//Resets steps, game history, game board
+	reMatch(){
+		this.setState({
+			stepNumber: 0,
+			xIsNext: true,
+			gameEnd: false,
+			draw: false,
+			emptySquaresLeft: numSquares,
+			history:[{
+				squares:Array(numSquares).fill(null),
+			}],
 		});
 	}
 
@@ -135,12 +163,15 @@ class Game extends React.Component {
 				</li>
 			);
 
-
 		});
 
 		let status;
 		if (winner) {
 			status = 'Winner: ' + winner;
+			this.state.gameEnd = true;
+		}
+		else if (this.state.draw) {
+			status = 'Game Draw';
 		}
 		else {
 			status = 'Next Player: ' + (this.state.xIsNext ? 'X':'O');
@@ -158,6 +189,8 @@ class Game extends React.Component {
 				</div>
 				<div className="game-info">
 					<div>{status}</div>
+					{ this.state.gameEnd ? <button onClick={()=> this.reMatch()}>Re-Match</button> : <div>Legal Moves Left: {this.state.emptySquaresLeft}</div>}
+					<p>Past Moves</p>
 					<ol>{moves}</ol>
 				</div>
 			</div>
