@@ -21,3 +21,32 @@ code {
 	height:100px;
 	display:flex;
 }
+
+.game{
+  text-align: center;
+  min-width:900px;
+}
+
+.game-main{
+  display: inline-flex;
+  min-width: 700px;
+  padding-top: 30px;
+}
+
+.game-info {
+  width:180px;
+  padding:30px;
+}
+
+.move-history {
+  width:180px;
+  padding:30px;
+}
+
+.change-name-submit {
+  margin-top:30px;
+}
+
+.field-label{
+  margin-right:5px;
+}

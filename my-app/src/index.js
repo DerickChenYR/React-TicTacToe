@@ -63,6 +63,60 @@ class Board extends React.Component {
 	}
 }
 
+class PlayerSetting extends React.Component {
+
+	constructor(props){
+		super(props);
+		this.state = {
+			xPlayerName:'Player X',
+			oPlayerName:'Player O',
+		}
+		this.handleChangeX = this.handleChangeX.bind(this);
+		this.handleChangeO = this.handleChangeO.bind(this);
+    	this.handleSubmit = this.handleSubmit.bind(this);
+
+	}
+
+	//Update state
+	handleChangeX(event){
+		this.setState({xPlayerName: event.target.value});
+	}
+
+	//Update state
+	handleChangeO(event){
+		this.setState({oPlayerName: event.target.value});
+	}
+
+	//Update game state from props
+	handleSubmit(event){
+
+		this.props.onSubmit(this.state.xPlayerName, this.state.oPlayerName);
+		event.preventDefault();
+	}
+
+	render(){
+		return(
+
+			<form onSubmit = {this.handleSubmit}>
+
+				<p>Change Player Name</p>
+				<label>
+					<span className = "field-label">Name for Player 1 (X)</span> 
+					<input type="text" value = {this.state.xPlayerName} onChange = {this.handleChangeX}/>
+				</label>
+				<br/>
+				<label>
+					<span className = "field-label">Name for Player 2 (O)</span> 
+					<input type="text" value = {this.state.oPlayerName} onChange = {this.handleChangeO}/>
+				</label>
+				<br/>
+				<input className = "change-name-submit" type="submit" value="Update" />
+
+			</form>
+		)
+	}
+}
+
 class Game extends React.Component {
 
 
@@ -83,6 +137,14 @@ class Game extends React.Component {
 			stepNumber: 0,
 			draw: false,
 			gameEnd : false,
+
+			//Track player scores
+			xWon:0,
+			oWon:0,
+
+			//Default player names
+			xPlayerName: "Player X",
+			oPlayerName: "Player O",
 		}
 	}
 
@@ -95,20 +157,11 @@ class Game extends React.Component {
 		const current = history[history.length-1];
 		const squares = current.squares.slice();
 
-		//Deal with draw situations
-		if (this.state.emptySquaresLeft === 1){
-			if (calculateWinner(squares) == null){
-				this.setState({
-					draw : true,
-					gameEnd : true,
-				})
-				
-			}
-		}
 		//Handles click on a filled square or game has already ended with a draw/winner
-		else if (squares[i] || this.state.gameEnd) {
+		if (squares[i] || this.state.gameEnd) {
 			return
 		}
+
 		//Check which player's turn and fill in square accordingly
 		squares[i] = this.state.xIsNext ? 'X':'O';
 		//Record to history, switch turn
@@ -120,6 +173,29 @@ class Game extends React.Component {
 			stepNumber: history.length,
 			emptySquaresLeft: this.state.emptySquaresLeft - 1,
 		});
+
+		//Check for winner after playing current move. Update game state
+		let winner = calculateWinner(squares);
+
+		if (winner != null){
+			this.setState({
+				gameEnd: true,
+			});
+			this.gameWon(winner);
+			return
+		}
+
+		//Deal with draw situations
+		else {
+			if (this.state.emptySquaresLeft === 1){
+				this.setState({
+					draw : true,
+					gameEnd : true,
+				})
+			}
+		}
+
+
 	}
 
 	jumpTo(step) {
@@ -144,6 +220,28 @@ class Game extends React.Component {
 		});
 	}
 
+	//Record current round winner to game score
+	gameWon(player){
+
+		if (player === 'X'){
+			this.setState({
+				xWon: this.state.xWon + 1,
+			});
+		}
+		else {
+			this.setState({
+				oWon: this.state.oWon + 1,
+			});
+		}
+	}
+
+	changeNames(x,o){
+		this.setState({
+			xPlayerName: x,
+			oPlayerName: o,
+		})
+	}
+
 
 	render() {
 		//Get current gate state and check for winner
@@ -165,10 +263,10 @@ class Game extends React.Component {
 
 		});
 
+		//Compose game info
 		let status;
 		if (winner) {
 			status = 'Winner: ' + winner;
-			this.state.gameEnd = true;
 		}
 		else if (this.state.draw) {
 			status = 'Game Draw';
@@ -179,20 +277,36 @@ class Game extends React.Component {
 
 
 		return (
-			<div className="game">
-				<div className="game-board">
-					<Board 
-						squares = {current.squares}
-						onClick = {(i) => this.handleClick(i)}
 
-					/>
+			<div className="game">
+				<div className="header">
+					<p>Tic Tac Toe with React JS</p>
+					<p>by Derick Chen</p>
 				</div>
-				<div className="game-info">
-					<div>{status}</div>
-					{ this.state.gameEnd ? <button onClick={()=> this.reMatch()}>Re-Match</button> : <div>Legal Moves Left: {this.state.emptySquaresLeft}</div>}
-					<p>Past Moves</p>
-					<ol>{moves}</ol>
+				<div className="game-main">
+					<div className="game-info">
+						<p>Player Scores</p>
+						<div>{this.state.xPlayerName} : {this.state.xWon}</div>
+						<div>{this.state.oPlayerName} : {this.state.oWon}</div>
+						<p>Game Info</p>
+						<div>{status}</div>
+						{ this.state.gameEnd ? <button onClick={()=> this.reMatch()}>Re-Match</button> : <div>Legal Moves Left: {this.state.emptySquaresLeft}</div>}
+					</div>
+					<div className="game-board">
+						<Board 
+							squares = {current.squares}
+							onClick = {(i) => this.handleClick(i)}
+
+						/>
+					</div>
+					<div className="move-history">
+
+						<p>Past Moves</p>
+						<ol>{moves}</ol>
+					</div>
 				</div>
+				<PlayerSetting
+					onSubmit = {(x,o) => this.changeNames(x,o)}/>
 			</div>
 		);
 	}
