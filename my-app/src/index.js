@@ -117,6 +117,47 @@ class PlayerSetting extends React.Component {
 	}
 }
 
+
+class PlayMusic extends React.Component {
+
+	constructor(props){
+		super(props);
+		this.state = {
+			play: false
+		};
+		this.audio = new Audio(this.props.musicURL);
+	}
+
+	audio = new Audio(this.props.musicURL)
+
+	togglePlay = () => { //Correct arrow function usage??
+
+		let currentMusic = this.state.play
+
+		this.setState({
+			play: !currentMusic,
+		});
+
+		if (!currentMusic){
+			this.audio.play();
+		}
+		else {
+			this.audio.pause();
+		}
+	}
+
+	render() {
+		return (
+			<div>
+				<p>Music</p>
+				<button onClick = {this.togglePlay}>{this.state.play? "Paused" : "Play"}</button>
+			</div>
+		);
+	}
+
+}
+
+
 class Game extends React.Component {
 
 
@@ -146,6 +187,9 @@ class Game extends React.Component {
 			xPlayerName: "Player X",
 			oPlayerName: "Player O",
 		}
+
+		this.musicURL = "http://k007.kiwi6.com/hotlink/kw5n9w0zmt/Nashville_Life_Music_-_All_Power.mp3"
+		//MP3 src : https://www.youtube.com/watch?v=CRB13OKLE4M
 	}
 
 	//Updates the game state according to mouse clicks
@@ -307,6 +351,9 @@ class Game extends React.Component {
 				</div>
 				<PlayerSetting
 					onSubmit = {(x,o) => this.changeNames(x,o)}/>
+				<br/>
+				<PlayMusic
+					musicURL = {this.musicURL} />
 			</div>
 		);
 	}
