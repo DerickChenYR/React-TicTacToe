@@ -11,6 +11,7 @@ A single page Tic Tac Toe game built with React JS
  - Game move history tracking and time machine
  - Rematch function
  - Change player display names
+ - Color coded board squares
  
  
 ## Built With
