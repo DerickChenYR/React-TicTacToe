@@ -20,10 +20,22 @@ const numSquares = 9;
 
 function Square(props){
 	return(
-		<button className="square" onClick={props.onClick}>
+		<button className="square" onClick={props.onClick} style={{background: FillColor(props.value, props.xColor, props.oColor)}}>
 			{props.value}
 		</button>
 	);
+}
+
+function FillColor(val, xColor, oColor){
+	if (val === null){
+		return "gainsboro";
+	}
+	else if (val === "X"){
+		return xColor;
+	}
+	else{
+		return oColor;
+	}
 }
 
 class Board extends React.Component {
@@ -35,6 +47,9 @@ class Board extends React.Component {
 				value={this.props.squares[i]} 
 				//Handles behaviour when user clicks square
 				onClick={() => this.props.onClick(i)}
+				xColor = {this.props.xColor}
+				oColor = {this.props.oColor}
+
 			/>
 		);
 	}
@@ -171,6 +186,7 @@ class Game extends React.Component {
 				squares:Array(numSquares).fill(null),
 			}],
 			xIsNext: true,
+			xStart: true,
 
 			emptySquaresLeft: numSquares,
 
@@ -186,6 +202,11 @@ class Game extends React.Component {
 			//Default player names
 			xPlayerName: "Player X",
 			oPlayerName: "Player O",
+
+			//Default player colors
+			xColor:"#0368A4",
+			oColor:"#FF3D00",
+			btnColor:"#00B459",
 		}
 
 		this.musicURL = "http://k007.kiwi6.com/hotlink/kw5n9w0zmt/Nashville_Life_Music_-_All_Power.mp3"
@@ -254,7 +275,8 @@ class Game extends React.Component {
 	reMatch(){
 		this.setState({
 			stepNumber: 0,
-			xIsNext: true,
+			xIsNext: !this.state.xStart,
+			xStart: !this.state.xStart,
 			gameEnd: false,
 			draw: false,
 			emptySquaresLeft: numSquares,
@@ -297,11 +319,11 @@ class Game extends React.Component {
 		const moves = history.map((step,move) => {
 			const desc = move?
 				'Go to move #' + move : 
-				'Go to game start';
+				'Reset Board';
 			return (
 				//Store key data to identify dynamic list
 				<li key={move}>
-					<button onClick = {() => this.jumpTo(move)}>{desc}</button>
+					<button className="history-btn" onClick = {() => this.jumpTo(move)}>{desc}</button>
 				</li>
 			);
 
@@ -310,13 +332,14 @@ class Game extends React.Component {
 		//Compose game info
 		let status;
 		if (winner) {
-			status = 'Winner: ' + winner;
+			let winnerName = winner === "X"? this.state.xPlayerName : this.state.oPlayerName;
+			status = 'Winner: ' + winnerName
 		}
 		else if (this.state.draw) {
 			status = 'Game Draw';
 		}
 		else {
-			status = 'Next Player: ' + (this.state.xIsNext ? 'X':'O');
+			status = 'Next Player: ' + (this.state.xIsNext ? this.state.xPlayerName:this.state.oPlayerName);
 		}
 
 
@@ -334,12 +357,15 @@ class Game extends React.Component {
 						<div>{this.state.oPlayerName} : {this.state.oWon}</div>
 						<p>Game Info</p>
 						<div>{status}</div>
-						{ this.state.gameEnd ? <button onClick={()=> this.reMatch()}>Re-Match</button> : <div>Legal Moves Left: {this.state.emptySquaresLeft}</div>}
+						<br/>
+						{ this.state.gameEnd ? <button style={{background:this.state.btnColor, color:"white"}} onClick={()=> this.reMatch()}>Re-Match</button> : <div>Legal Moves Left: {this.state.emptySquaresLeft}</div>}
 					</div>
 					<div className="game-board">
 						<Board 
 							squares = {current.squares}
 							onClick = {(i) => this.handleClick(i)}
+							xColor = {this.state.xColor}
+							oColor = {this.state.oColor}
 
 						/>
 					</div>
